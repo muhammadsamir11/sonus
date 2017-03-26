@@ -1,8 +1,8 @@
 'use strict'
-
+const cv = require('opencv');
 const record = require('node-record-lpcm16')
 const stream = require('stream')
-const {Detector, Models} = require('snowboy')
+const { Detector, Models } = require('snowboy')
 
 const ERROR = {
   NOT_STARTED: "NOT_STARTED",
@@ -52,20 +52,42 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
 
   audioStream.pipe(recognitionStream)
 }
+// initialize camera
+var camera = new cv.VideoCapture(0);
+camera.setWidth(320);
+camera.setHeight(240);
 
+// initialize Sonus
 const Sonus = {}
 Sonus.annyang = require('./lib/annyang-core.js')
+
+
+Sonus.detectFace = (cameranum, callback) => {
+  camera.read(function (err, im) {
+    if (err) throw err;
+
+    im.convertGrayscale();
+    im.detectObject('./node_modules/opencv/data/haarcascade_frontalface_alt.xml', {}, function (err, faces) {
+      if (err) throw err;
+
+      if (faces.length > 0) return callback(true)
+      else return callback(false)
+    });
+  });
+}
+
 
 Sonus.init = (options, recognizer) => {
   // don't mutate options
   const opts = Object.assign({}, options),
-    models = new Models(),
-    sonus = new stream.Writable(),
-    csr = CloudSpeechRecognizer.init(recognizer)
-  sonus.mic = {}
-  sonus.recordProgram = opts.recordProgram
-  sonus.device = opts.device
-  sonus.started = false
+        models = new Models(),
+        csr = CloudSpeechRecognizer.init(recognizer);
+
+  const sonus = new stream.Writable();
+        sonus.mic = {}
+        sonus.recordProgram = opts.recordProgram
+        sonus.device = opts.device
+        sonus.started = false
 
   // If we don't have any hotwords passed in, add the default global model
   opts.hotwords = opts.hotwords || [1]
@@ -116,8 +138,17 @@ Sonus.init = (options, recognizer) => {
     if (sonus.started) {
       try {
         let triggerHotword = (index == 0) ? hotword : models.lookup(index)
-        sonus.emit('hotword', index, triggerHotword)
-        CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
+
+        // Check face
+        Sonus.detectFace(0, function (result) {
+          if (result) {
+            sonus.emit('hotword', index, triggerHotword)
+            CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
+          }
+        });
+        // end
+        //sonus.emit('hotword', index, triggerHotword)
+        //CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
       } catch (e) {
         throw ERROR.INVALID_INDEX
       }
