@@ -19,7 +19,7 @@ CloudSpeechRecognizer.init = recognizer => {
 
 CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecognizer) => {
   if (cloudSpeechRecognizer.listening) {
-    return
+    return false
   }
 
   cloudSpeechRecognizer.listening = true
@@ -39,7 +39,6 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
 
   recognitionStream.on('error', err => cloudSpeechRecognizer.emit('error', err))
 
-
   recognitionStream.on('data', data => {
     if (data) {
       cloudSpeechRecognizer.emit('data', data)
@@ -52,40 +51,29 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
 
   audioStream.pipe(recognitionStream)
 }
+
 // initialize camera
-const camera = new cv.VideoCapture(0);
-//const window = new cv.NamedWindow('Video', 0);
+var camera = new cv.VideoCapture(0);
 camera.setWidth(320);
 camera.setHeight(240);
 
 // initialize Sonus
 const Sonus = {}
-//Sonus.annyang = require('./lib/annyang-core.js')
-
+//Sonus.annyang = require('./lib/annyang-core.js');
 
 Sonus.detectFace = (cameranum, callback) => {
   camera.read(function (err, im) {
     if (err) throw err;
 
-    if (im.size()[0] > 0 && im.size()[1] > 0) {
-      im.convertGrayscale();
-      im.detectObject(cv.FACE_CASCADE, {}, function (err, faces) {
-        if (err) throw err;
+    im.convertGrayscale();
+    im.detectObject('./node_modules/opencv/data/haarcascade_frontalface_alt.xml', {}, function (err, faces) {
+      if (err) throw err;
 
-        if (faces.length > 0) return callback(true)
-        else return callback(false)
-
-        /*for (var i = 0; i < faces.length; i++) {
-          let x = faces[i]
-          im.rectangle([x.x, x.y], [x.width, x.height], [109, 252, 180], 2);
-          window.show(im);
-        }
-        window.blockingWaitKey(0, 50);*/
-      });
-    }
+      if (faces.length > 0) return callback(true)
+      else return callback(false)
+    });
   });
 }
-
 
 Sonus.init = (options, recognizer) => {
   // don't mutate options
@@ -141,6 +129,8 @@ Sonus.init = (options, recognizer) => {
       }
     } else if (data.endpointerType === 'END_OF_UTTERANCE' && transcriptEmpty) {
       sonus.emit('final-result', "")
+    } else {
+      sonus.emit('final-result', "")
     }
   })
 
@@ -157,8 +147,6 @@ Sonus.init = (options, recognizer) => {
           }
         });
         // end
-        //sonus.emit('hotword', index, triggerHotword)
-        //CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
       } catch (e) {
         throw ERROR.INVALID_INDEX
       }
