@@ -60,7 +60,7 @@ camera.setHeight(240);
 
 // initialize Sonus
 const Sonus = {}
-Sonus.annyang = require('./lib/annyang-core.js')
+//Sonus.annyang = require('./lib/annyang-core.js')
 
 
 Sonus.detectFace = (cameranum, callback) => {
@@ -134,7 +134,7 @@ Sonus.init = (options, recognizer) => {
       transcriptEmpty = false
       if (result.isFinal) {
         sonus.emit('final-result', result.transcript)
-        Sonus.annyang.trigger(result.transcript)
+        //Sonus.annyang.trigger(result.transcript)
         transcriptEmpty = true //reset transcript
       } else {
         sonus.emit('partial-result', result.transcript)
