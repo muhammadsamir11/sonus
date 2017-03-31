@@ -19,7 +19,7 @@ CloudSpeechRecognizer.init = recognizer => {
 
 CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecognizer) => {
   if (cloudSpeechRecognizer.listening) {
-    return false
+    return
   }
 
   cloudSpeechRecognizer.listening = true
@@ -38,6 +38,7 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
   })
 
   recognitionStream.on('error', err => cloudSpeechRecognizer.emit('error', err))
+
 
   recognitionStream.on('data', data => {
     if (data) {
@@ -78,14 +79,14 @@ Sonus.detectFace = (cameranum, callback) => {
 Sonus.init = (options, recognizer) => {
   // don't mutate options
   const opts = Object.assign({}, options),
-    models = new Models(),
-    csr = CloudSpeechRecognizer.init(recognizer);
+        models = new Models(),
+        csr = CloudSpeechRecognizer.init(recognizer);
 
   const sonus = new stream.Writable();
-  sonus.mic = {}
-  sonus.recordProgram = opts.recordProgram
-  sonus.device = opts.device
-  sonus.started = false
+        sonus.mic = {}
+        sonus.recordProgram = opts.recordProgram
+        sonus.device = opts.device
+        sonus.started = false
 
   // If we don't have any hotwords passed in, add the default global model
   opts.hotwords = opts.hotwords || [1]
@@ -129,8 +130,9 @@ Sonus.init = (options, recognizer) => {
       }
     } else if (data.endpointerType === 'END_OF_UTTERANCE' && transcriptEmpty) {
       sonus.emit('final-result', "")
-    } else {
-      sonus.emit('final-result', "")
+    }else if(!data) {
+      //console.log('else');
+      sonus.emit('final-result', null)
     }
   })
 
