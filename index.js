@@ -1,4 +1,5 @@
 'use strict'
+const cv = require('opencv');
 const record = require('node-record-lpcm16')
 const stream = require('stream')
 const { Detector, Models } = require('snowboy')
@@ -52,20 +53,30 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
   audioStream.pipe(recognitionStream)
 }
 
+// initialize camera
+const camera = new cv.VideoCapture(0);
+camera.setWidth(320);
+camera.setHeight(240);
+
 // initialize Sonus
 const Sonus = {}
 
+// detect face
 Sonus.detectFace = (opts, callback) => {
-  opts.camera.read(function (err, im) {
+  console.log('detectFace ...');
+  camera.read(function (err, im) {
     if (err) throw err;
 
     im.convertGrayscale();
-    //'./node_modules/opencv/data/haarcascade_frontalface_alt.xml'
     im.detectObject(cv.FACE_CASCADE, {}, function (err, faces) {
       if (err) throw err;
 
-      if (faces.length > 0) return callback(true)
-      else return callback(false)
+      if (faces.length > 0) {
+        return callback(true)
+      }
+      else {
+        return callback(false)
+      }
     });
   });
 }
