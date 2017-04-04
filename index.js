@@ -60,7 +60,8 @@ Sonus.detectFace = (opts, callback) => {
     if (err) throw err;
 
     im.convertGrayscale();
-    im.detectObject('./node_modules/opencv/data/haarcascade_frontalface_alt.xml', {}, function (err, faces) {
+    //'./node_modules/opencv/data/haarcascade_frontalface_alt.xml'
+    im.detectObject(cv.FACE_CASCADE, {}, function (err, faces) {
       if (err) throw err;
 
       if (faces.length > 0) return callback(true)
