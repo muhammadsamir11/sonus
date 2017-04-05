@@ -82,8 +82,6 @@ Sonus.detectFace = (opts, camera, callback) => {
 }
 
 Sonus.init = (options, recognizer) => {
-
-
   // don't mutate options
   const opts = Object.assign({}, options),
     models = new Models(),
@@ -144,10 +142,10 @@ Sonus.init = (options, recognizer) => {
       }
     } else if (data.endpointerType === 'END_OF_UTTERANCE' && transcriptEmpty) {
       sonus.emit('final-result', "")
-    } else if (!data) {
+    }/* else if (!data) {
       //console.log('else');
       sonus.emit('final-result', null)
-    }
+    }*/
   })
 
   sonus.trigger = (index, hotword) => {
