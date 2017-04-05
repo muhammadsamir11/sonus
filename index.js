@@ -53,17 +53,17 @@ CloudSpeechRecognizer.startStreaming = (options, audioStream, cloudSpeechRecogni
   audioStream.pipe(recognitionStream)
 }
 
-// initialize camera
+/*// initialize camera
 const camera = new cv.VideoCapture(0);
 camera.setWidth(320);
-camera.setHeight(240);
+camera.setHeight(240);*/
 
 // initialize Sonus
 const Sonus = {}
 
 // detect face
-Sonus.detectFace = (opts, callback) => {
-  console.log('detectFace ...');
+Sonus.detectFace = (opts, camera, callback) => {
+
   camera.read(function (err, im) {
     if (err) throw err;
 
@@ -82,16 +82,25 @@ Sonus.detectFace = (opts, callback) => {
 }
 
 Sonus.init = (options, recognizer) => {
+
+
   // don't mutate options
   const opts = Object.assign({}, options),
     models = new Models(),
     csr = CloudSpeechRecognizer.init(recognizer);
 
+  // initialize sonus
   const sonus = new stream.Writable();
   sonus.mic = {}
   sonus.recordProgram = opts.recordProgram
   sonus.device = opts.device
   sonus.started = false
+  if (opts.face) {
+    console.log('------', 'face enabled');
+    sonus.camera = new cv.VideoCapture(0);
+    sonus.camera.setWidth(320);
+    sonus.camera.setHeight(240);
+  }
 
   // If we don't have any hotwords passed in, add the default global model
   opts.hotwords = opts.hotwords || [1]
@@ -142,17 +151,23 @@ Sonus.init = (options, recognizer) => {
   })
 
   sonus.trigger = (index, hotword) => {
+    //console.log(sonus.camera);
     if (sonus.started) {
       try {
         let triggerHotword = (index == 0) ? hotword : models.lookup(index)
 
         // Check face
-        Sonus.detectFace(opts, (result) => {
-          if (result) {
-            sonus.emit('hotword', index, triggerHotword)
-            CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
-          }
-        });
+        if (opts.face) {
+          Sonus.detectFace(opts, sonus.camera, (result) => {
+            if (result) {
+              sonus.emit('hotword', index, triggerHotword)
+              CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
+            }
+          });
+        } else {
+          sonus.emit('hotword', index, triggerHotword)
+          CloudSpeechRecognizer.startStreaming(opts, sonus.mic, csr)
+        }
         // end
       } catch (e) {
         throw ERROR.INVALID_INDEX
